@@ -15,21 +15,20 @@ def loss_sd (S,data_test,list_neigh,model, limit) :
         loss += calc_loss(data_neigh_s, target_neigh_s_proba, limit)
     return loss
 
-def loss_global_wb (data_test,list_neigh,model, limit) :
+def loss_global_wb(data_test,list_neigh,model, limit):
 
     n = np.size(data_test,0)
     data_neigh_O, target_neigh_O_proba = sampling_sb(data_test,np.arange(n),list_neigh,model)
-    global_loss = calc_loss(data_neigh_O, target_neigh_O_proba, limit)
-    return global_loss
+    return calc_loss(data_neigh_O, target_neigh_O_proba, limit)
 
 
-def loss_local_models (n,list_neigh,model, limit) :
+def loss_local_models(n,list_neigh,model, limit):
 
     loss = 0
-    for i in range(0,n) :
+    for i in range(n):
         data_neigh_i= list_neigh[i][0]
         target_neigh_i_proba = list_neigh[i][1]
-        loss += calc_loss(data_neigh_i, target_neigh_i_proba, limit)    
+        loss += calc_loss(data_neigh_i, target_neigh_i_proba, limit)
     return loss
 
 def fscore_global_wb (data_test,n,list_neigh,model,nb_classes) :
@@ -43,10 +42,9 @@ def fscore_global_wb (data_test,n,list_neigh,model,nb_classes) :
 
     return (f1_score(a[:,2],b[:,2],average='weighted'), f1_score(a[:,1],b[:,1],average='weighted'), f1_score(a[:,0],b[:,0],average='weighted'))
 
-def fscore_sd (S,data_test,list_neigh,model,nb_classes) :
+def fscore_sd(S,data_test,list_neigh,model,nb_classes):
 
-    iteration = 0 
-    for s in S :
+    for iteration, s in enumerate(S):
         data_neigh_s, target_neigh_s_proba = sampling_sb(data_test,s,list_neigh,model)
         lr = Ridge(alpha = 1)
         model_lr = lr.fit(data_neigh_s,target_neigh_s_proba)
@@ -59,15 +57,12 @@ def fscore_sd (S,data_test,list_neigh,model,nb_classes) :
             a = np.concatenate((a,np.argsort(target_lr, axis=1)[:,-3:]))
             b = np.concatenate((b,np.argsort(target_neigh_s_proba, axis=1)[:,-3:]))
 
-        iteration += 1
-        
     return (f1_score(a[:,2],b[:,2],average='weighted'), f1_score(a[:,1],b[:,1],average='weighted'), f1_score(a[:,0],b[:,0],average='weighted'))
 
-def fscore_local_models (data_test,n,list_neigh,model,nb_classes) :
+def fscore_local_models(data_test,n,list_neigh,model,nb_classes):
     
     
-    iteration = 0 
-    for i in range(0,n) :
+    for iteration, i in enumerate(range(n)):
         
         data_neigh_i= list_neigh[i][0]
         target_neigh_i_proba = list_neigh[i][1]
@@ -80,9 +75,7 @@ def fscore_local_models (data_test,n,list_neigh,model,nb_classes) :
         else :
             a = np.concatenate((a,np.argsort(target_lr, axis=1)[:,-3:]))
             b = np.concatenate((b,np.argsort(target_neigh_i_proba, axis=1)[:,-3:]))
-        
-        iteration += 1    
-    
+
     return (f1_score(a[:,2],b[:,2],average='weighted'), f1_score(a[:,1],b[:,1],average='weighted'), f1_score(a[:,0],b[:,0],average='weighted'))
 
 def unit_vector(vector):
@@ -96,7 +89,7 @@ def angle_between(v1, v2):
     return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
 
 
-def similarity (W,nb_classes) :
+def similarity(W,nb_classes):
 
     l = []
 
@@ -106,26 +99,26 @@ def similarity (W,nb_classes) :
 
 
     distance_matrix = np.zeros(len(l)**2).reshape(len(l),len(l))
-    for i in range (0,len(l)) :
+    for i in range(len(l)):
         for j in range (i,len(l)):
-            for c in range (0,nb_classes) :
+            for c in range(nb_classes):
                 if c == 0 : 
                     v1 = l[i][1].coef_[c]
                     v2 = l[j][1].coef_[c]
                 else :
                     v1 = np.concatenate((v1,l[i][1].coef_[c]),axis=0)
-                    v2 = np.concatenate((v2,l[j][1].coef_[c]),axis=0)                    
+                    v2 = np.concatenate((v2,l[j][1].coef_[c]),axis=0)
             distance_matrix[i,j] = round(math.cos(angle_between(v1,v2)),2)
             distance_matrix[j,i] = distance_matrix[i,j]
 
     return distance_matrix
 
 
-def avg_non_similar (dist,treshold) :
+def avg_non_similar(dist,treshold):
     
-    nb_non_sim = 0 
+    nb_non_sim = 0
     nb_sbgrps = np.size(dist,0)
-    for i in range (0, nb_sbgrps) :
+    for i in range(nb_sbgrps):
         for j in range (i+1, nb_sbgrps) :
             if dist[i,j] <= treshold :
                 nb_non_sim += 1
